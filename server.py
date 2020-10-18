@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 from AutomaticallyGenerating import AutomaticallyGenerating
+# -*- coding: utf-8 -*-
+from copy import copy
+
 class Graph(object):
 
     def __init__(self, graph_dict=None, start = None):
@@ -8,29 +11,46 @@ class Graph(object):
         self.__graph_dict = graph_dict
         self.start = start
         self.height = 0
+        self.step = []
     def vertices(self):
        
         return list(self.__graph_dict.keys())
 
-    def edges(self):
+    def DLS(self,src,target,maxDepth): 
+  
+        if src == target : return True
+  
+        # If reached the maximum depth, stop recursing. 
+        if maxDepth <= 0 : return False
+  
+        # Recur for all the vertices adjacent to this vertex 
+        for i in self.__graph_dict[src]: 
+                if(self.DLS(i,target,maxDepth-1)): 
+                    self.step.insert(0,i)
+                    return True
+        return False
+   
+    def IDDFS(self,src, target, maxDepth): 
       
-        return self.__generate_edges()
-
+        # Repeatedly depth-limit search till the 
+        # maximum depth 
+        for i in range(maxDepth): 
+            if (self.DLS(src, target, i)): 
+                return True
+        return False
     def child(self,vertice):
      
         return self.__graph_dict[vertice]
 
-    def __str__(self):
-        res = "vertices: "
-        for k in self.__graph_dict:
-            res += str(k) + " "
-        res += "\nedges: "
-        for edge in self.__generate_edges():
-            res += str(edge) + " "
-        return res
+    def parent(self,vertice):
+        for key, value in self.__graph_dict.items(): 
+         if vertice in value: 
+             return key 
 
     def deep(self,vertex_):
+
         if ( vertex_ == self.start):
+            
             return self.height
         else:
          
@@ -40,45 +60,22 @@ class Graph(object):
                     self.deep(i)
                     return self.height
 
-def get(open):
-    return open.pop(0)
-def depthwise_search(graph:Graph, src:str, dest:[] , h:int):
-    Open  = [src]
-    Close = []
-    DS    = h 
-    result = []
-    while len(Open) != 0:
-        S = get(Open)
-        Close.append(S)
-        result.append(S)
-        if( S in dest ):
-            
-            return result
-        if (len(graph.child(S)) != 0 and (graph.child(S) not in Open and Close)):
-            dS  = graph.deep(S)
-            if(dS >= 0 or dS <= DS - 1):
-                for i in graph.child(S):
-                    Open.insert(0,i)
-            if(dS == DS):
-                for i in graph.child(S):
-                    Open.append(i)
-            if(dS == DS + 1):
-                DS = DS + h
-                if( h == 1):
-                    for i in graph.child(S):
-                        Open.append(i)
-                else:
-                    for i in graph.child(S):
-                        Open.insert(0,i)
 
-    return False
 
-g = AutomaticallyGenerating([[3,2,1],[],[]])
+initialState = [[3,2,1],[],[]]
+goal = [[],[],[3,2,1]]
+number_of_discs = 3 
+
+g = AutomaticallyGenerating(initialState)
 g.process(g.node)
 graph = Graph(g.get_graph(),'A1')
-temp = {k:v for k, v in g.get_defined().items() if v == [[],[],[3,2,1]]}
+temp = {k:v for k, v in g.get_defined().items() if v == goal}
 
+print(g.get_graph())
+print(g.get_defined())
 step = []
-for i in depthwise_search(graph,'A1',[list(temp.keys())[0]],2):
+graph.IDDFS('A1',list(temp.keys())[0],2**number_of_discs)
+graph.step.insert(0,'A1')
+for i in graph.step:
     step.append(g.get_defined()[i])
 print(step)
