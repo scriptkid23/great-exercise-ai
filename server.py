@@ -1,81 +1,37 @@
 # -*- coding: utf-8 -*-
-from AutomaticallyGenerating import AutomaticallyGenerating
-# -*- coding: utf-8 -*-
-from copy import copy
-
-class Graph(object):
-
-    def __init__(self, graph_dict=None, start = None):
-        if graph_dict == None:
-            graph_dict = {}
-        self.__graph_dict = graph_dict
-        self.start = start
-        self.height = 0
-        self.step = []
-    def vertices(self):
-       
-        return list(self.__graph_dict.keys())
-
-    def DLS(self,src,target,maxDepth): 
-  
-        if src == target : return True
-  
-        # If reached the maximum depth, stop recursing. 
-        if maxDepth <= 0 : return False
-  
-        # Recur for all the vertices adjacent to this vertex 
-        for i in self.__graph_dict[src]: 
-                if(self.DLS(i,target,maxDepth-1)): 
-                    self.step.insert(0,i)
-                    return True
-        return False
-   
-    def IDDFS(self,src, target, maxDepth): 
-      
-        # Repeatedly depth-limit search till the 
-        # maximum depth 
-        for i in range(maxDepth): 
-            if (self.DLS(src, target, i)): 
-                return True
-        return False
-    def child(self,vertice):
-     
-        return self.__graph_dict[vertice]
-
-    def parent(self,vertice):
-        for key, value in self.__graph_dict.items(): 
-         if vertice in value: 
-             return key 
-
-    def deep(self,vertex_):
-
-        if ( vertex_ == self.start):
-            
-            return self.height
-        else:
-         
-            for i in self.__graph_dict:
-                if vertex_ in self.child(i):
-                    self.height = self.height + 1
-                    self.deep(i)
-                    return self.height
 
 
+from flask import Flask, request, jsonify,render_template,send_from_directory
+from Graph import graphService
+from flask_cors import CORS
 
-initialState = [[3,2,1],[],[]]
-goal = [[],[],[3,2,1]]
-number_of_discs = 3 
+app = Flask(__name__,static_folder="build/static", template_folder="build")
+cors = CORS(app)
 
-g = AutomaticallyGenerating(initialState)
-g.process(g.node)
-graph = Graph(g.get_graph(),'A1')
-temp = {k:v for k, v in g.get_defined().items() if v == goal}
+@app.route("/")
+def home():
+    return render_template('index.html')
 
-print(g.get_graph())
-print(g.get_defined())
-step = []
-graph.IDDFS('A1',list(temp.keys())[0],2**number_of_discs)
-graph.step.insert(0,'A1')
-for i in graph.step:
-    step.append(g.get_defined()[i])
-print(step)
+@app.route("/manifest.json")
+def manifest():
+    return send_from_directory('./build', 'manifest.json')
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory('./build', 'favicon.ico')
+
+@app.route('/process', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        req = request.get_json()
+        temp = []
+        print(type(req['number_of_disc']))
+        for i in range(1,req['number_of_disc'] + 1):
+            temp.insert(0,i)
+        src=[temp,[],[]]
+        dest = [[],[],temp]        
+        return jsonify(graphService(src,dest))
+        
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0')
